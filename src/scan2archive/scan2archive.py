@@ -10,9 +10,10 @@ from subprocess import call
 
 
 class Scan2Archive(object):
-    '''
-    classdocs
-    '''
+    """
+    Scan2Archive scans, rotates and performs OCR over multiple pages. The output is a pdf and OCR data (embedded in the pdf or as text file).
+    The class can be used to archive documents relatively quickly.
+    """
 
 
     def __init__(self, filename, ocrLanguage, device, mode, verbose, pdfsandwich, resolution):
