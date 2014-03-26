@@ -154,7 +154,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', dest='filename', action='store', default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), help='filename')
     parser.add_argument('-v', dest='verbose', action='store_true', help='verbose mode')
     parser.add_argument('-l', dest='ocrLanguage', default='deu', action='store', help='Language for OCR: eng, deu')
-    parser.add_argument('-d', dest='device', action='store', default="" , help='scanner device name, get with imagescan -L')
+    parser.add_argument('-d', dest='device', action='store', default="" , help='scanner device name, get with scanimage -L')
     parser.add_argument('-m', dest='mode', action='store', default="Gray" , help='Gray or Color')
     parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False , help='Use pdfsandwich (NOT WORKING)')
     parser.add_argument('-r', dest='resolution', default=150, action='store', help='Resolution')
