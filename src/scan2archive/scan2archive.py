@@ -1,27 +1,27 @@
 #!/usr/bin/env python
 
-#@author Thomas Gubler <thomasgubler@gmail.com>
-#License: GPLv3, see LICENSE.txt
+# @author Thomas Gubler <thomasgubler@gmail.com>
+# License: GPLv3, see LICENSE.txt
 
 import argparse
 import datetime
 import os
-from subprocess import call
 
 
 class Scan2Archive(object):
     """
-    Scan2Archive scans, rotates and performs OCR over multiple pages. The output is a pdf and OCR data (embedded in the pdf or as text file).
+    Scan2Archive scans, rotates and performs OCR over multiple pages.
+    The output is a pdf and OCR data (embedded in the pdf or as text file).
     The class can be used to archive documents relatively quickly.
     """
 
-
-    def __init__(self, filename, ocrLanguage, device, mode, verbose, pdfsandwich, resolution):
+    def __init__(self, filename, ocrLanguage, device,
+                 mode, verbose, pdfsandwich, resolution):
         """ Constructor """
 
         self.filename = filename
         self.ocrLanguage = ocrLanguage
-        self.device = device;
+        self.device = device
         self.mode = mode
         self.verbose = verbose
         self.resolution = int(resolution)
@@ -43,27 +43,30 @@ class Scan2Archive(object):
         pageRotation = 0.
 
         while not finished:
-
-            rotationInput = input("Put Page " + str(fileIndex) + " into scanner!\nEnter rotation in degrees cw [" + str(pageRotation) + "]:")
+            rotationInput = input("Put Page "
+                                  + str(fileIndex)
+                                  + " into scanner!\nEnter rotation in degrees cw ["
+                                  + str(pageRotation) + "]:")
             if rotationInput:
                 pageRotation = float(rotationInput)
 
-            pageFilename =  self.filename + "_" + str(fileIndex)
+            pageFilename = self.filename + "_" + str(fileIndex)
 
             # scan page
             print("Starting scan")
             scanimageArguments = ""
             if self.device:
-                scanimageArguments +=  "--device " + self.device
+                scanimageArguments += "--device " + self.device
             scanimageArguments += " -x 215 -y 297 --resolution " + str(self.resolution)
-            scanimageArguments +=  " --mode " + self.mode
+            scanimageArguments += " --mode " + self.mode
             scanimageOutputFilename = pageFilename + ".tiff"
             scanimageOutput = " > " + scanimageOutputFilename
             scanCommand = "scanimage " + scanimageArguments + " " + scanimageOutput
 
-            if self.verbose: print(scanCommand)
+            if self.verbose:
+                print(scanCommand)
             os.system(scanCommand)
-            scanFiles += scanimageOutputFilename  + " ";
+            scanFiles += scanimageOutputFilename + " "
             print("Scan finished")
 
             # rotate file (tiff to rotated tiff)
@@ -71,7 +74,8 @@ class Scan2Archive(object):
             if pageRotation != 0.:
                 print("Starting rotation")
                 rotateCommand = "convert -rotate " + str(pageRotation) + " " + scanimageOutputFilename + " " + rotateimageOutputFilename
-                if self.verbose: print(rotateCommand)
+                if self.verbose:
+                    print(rotateCommand)
                 os.system(rotateCommand)
                 print("Rotation finished")
 
@@ -79,22 +83,22 @@ class Scan2Archive(object):
             print("Starting file conversion")
             convertOutputFilename = pageFilename + ".pdf"
             convertCommand = "convert " + rotateimageOutputFilename + " " + convertOutputFilename
-            if self.verbose: print(convertCommand)
+            if self.verbose:
+                print(convertCommand)
             os.system(convertCommand)
-            convertFiles += convertOutputFilename + " ";
+            convertFiles += convertOutputFilename + " "
             print("File conversion finished")
 
-            #ocr (on rotated tiff)
+            # ocr (on rotated tiff)
             if not self.pdfsandwich:
                 print("OCR (direct) started")
-                ocrOutputFilename = pageFilename # tesseract adds the '.txt' itself
-                ocrCommand = "tesseract -l " + self.ocrLanguage + " " +  rotateimageOutputFilename + " " + ocrOutputFilename
-                if self.verbose: print(ocrCommand)
+                ocrOutputFilename = pageFilename  # tesseract adds the '.txt' itself
+                ocrCommand = "tesseract -l " + self.ocrLanguage + " " + rotateimageOutputFilename + " " + ocrOutputFilename
+                if self.verbose:
+                    print(ocrCommand)
                 os.system(ocrCommand)
                 ocrFiles += ocrOutputFilename + ".txt "
                 print("OCR finished")
-
-
 
             # check if this was the last page
             userInput = input("Page " + str(fileIndex) + " finished. Continue? Is the next page in the scanner? [Y/n]")
@@ -110,20 +114,22 @@ class Scan2Archive(object):
             # pdf unite
             print("Starting pdf unite")
             pdfuniteCommand = "pdfunite " + convertFiles + " " + pdfUniteOutputFilename
-            if self.verbose: print(pdfuniteCommand)
+            if self.verbose:
+                print(pdfuniteCommand)
             os.system(pdfuniteCommand)
             print("Finished pdf unite")
         else:
             # only one file, copy instead of pdfunite
             cpCommand = "cp " + convertFiles + " " + pdfUniteOutputFilename
-            if self.verbose: print(cpCommand)
+            if self.verbose:
+                print(cpCommand)
             os.system(cpCommand)
 
         if self.pdfsandwich:
             # use pdfsandwich
             print("OCR (pdfsandwich for whole pdf) started")
             ocrOutputFilename = pageFilename + "_ocr.pdf"
-            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " +  pdfUniteOutputFilename + "-o " + pdfUniteOutputFilename
+            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " + pdfUniteOutputFilename + "-o " + pdfUniteOutputFilename
             if self.verbose:
                 ocrCommand += " -verbose"
                 print(ocrCommand)
@@ -139,13 +145,12 @@ class Scan2Archive(object):
                             outfile.write(line)
             print("Finished merging text files")
 
-
-
         print("Merging finished")
 
         # Clean up
-        rmCommand = "rm " + scanFiles + convertFiles + ocrFiles;
-        if self.verbose: print(rmCommand);
+        rmCommand = "rm " + scanFiles + convertFiles + ocrFiles
+        if self.verbose:
+            print(rmCommand)
         os.system(rmCommand)
         print("Cleaned up and done")
 
@@ -154,13 +159,12 @@ if __name__ == "__main__":
     parser.add_argument('-o', dest='filename', action='store', default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), help='filename')
     parser.add_argument('-v', dest='verbose', action='store_true', help='verbose mode')
     parser.add_argument('-l', dest='ocrLanguage', default='deu', action='store', help='Language for OCR: eng, deu')
-    parser.add_argument('-d', dest='device', action='store', default="" , help='scanner device name, get with scanimage -L')
-    parser.add_argument('-m', dest='mode', action='store', default="Gray" , help='Gray or Color')
-    parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False , help='Use pdfsandwich (NOT WORKING)')
+    parser.add_argument('-d', dest='device', action='store', default="", help='scanner device name, get with scanimage -L')
+    parser.add_argument('-m', dest='mode', action='store', default="Gray", help='Gray or Color')
+    parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False, help='Use pdfsandwich (NOT WORKING)')
     parser.add_argument('-r', dest='resolution', default=150, action='store', help='Resolution')
 
     args = parser.parse_args()
 
-    archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device, args.mode, args.verbose, args.pdfsandwich, args.resolution);
+    archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device, args.mode, args.verbose, args.pdfsandwich, args.resolution)
     archiver.run()
-
