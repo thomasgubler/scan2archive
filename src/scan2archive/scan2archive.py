@@ -56,12 +56,12 @@ class Scan2Archive(object):
             print("Starting scan")
             scanimageArguments = ""
             if self.device:
-                scanimageArguments += "--device " + self.device
-            scanimageArguments += " -x 215 -y 297 --resolution " + str(self.resolution)
-            scanimageArguments += " --mode " + self.mode
-            scanimageOutputFilename = pageFilename + ".tiff"
-            scanimageOutput = " > " + scanimageOutputFilename
-            scanCommand = "scanimage " + scanimageArguments + " " + scanimageOutput
+                scanimageArguments += "--device '" + self.device + "'"
+                scanimageArguments += " -x 215 -y 296.9 --resolution " + str(self.resolution)
+                scanimageArguments += " --mode " + self.mode
+                scanimageOutputFilename = pageFilename + ".tiff"
+                scanimageOutput = " > " + scanimageOutputFilename
+                scanCommand = "scanimage " + scanimageArguments + " " + scanimageOutput
 
             if self.verbose:
                 print(scanCommand)
@@ -156,7 +156,7 @@ class Scan2Archive(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scan and archive documents', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-o', dest='filename', action='store', default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), help='filename')
+    parser.add_argument('-o', dest='filename', action='store', default=datetime.datetime.now().strftime("%Y-%m-%d_%H_%M_%S"), help='filename')
     parser.add_argument('-v', dest='verbose', action='store_true', help='verbose mode')
     parser.add_argument('-l', dest='ocrLanguage', default='deu', action='store', help='Language for OCR: eng, deu')
     parser.add_argument('-d', dest='device', action='store', default="", help='scanner device name, get with scanimage -L')
