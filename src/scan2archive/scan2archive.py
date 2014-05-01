@@ -18,38 +18,38 @@ class Scan2Archive(object):
 
     def __init__(self, filename, ocrLanguage, device, mode, verbose, pdfsandwich, resolution):
         """ Constructor """
-        
+
         self.filename = filename
         self.ocrLanguage = ocrLanguage
         self.device = device;
         self.mode = mode
         self.verbose = verbose
         self.resolution = int(resolution)
-        
+
         self.pdfsandwich = pdfsandwich
         if pdfsandwich:
             print("Using pdfsandwich")
         else:
             print("Using tesseract directly")
-        
+
     def run(self):
         """Scan and parse multiple documents """
-        
+
         finished = False
         fileIndex = 0
         scanFiles = ""
         convertFiles = ""
         ocrFiles = ""
         pageRotation = 0.
-        
-        while not finished:            
+
+        while not finished:
 
             rotationInput = input("Put Page " + str(fileIndex) + " into scanner!\nEnter rotation in degrees cw [" + str(pageRotation) + "]:")
             if rotationInput:
-                pageRotation = float(rotationInput)          
-            
+                pageRotation = float(rotationInput)
+
             pageFilename =  self.filename + "_" + str(fileIndex)
-            
+
             # scan page
             print("Starting scan")
             scanimageArguments = ""
@@ -60,12 +60,12 @@ class Scan2Archive(object):
             scanimageOutputFilename = pageFilename + ".tiff"
             scanimageOutput = " > " + scanimageOutputFilename
             scanCommand = "scanimage " + scanimageArguments + " " + scanimageOutput
-               
+
             if self.verbose: print(scanCommand)
             os.system(scanCommand)
             scanFiles += scanimageOutputFilename  + " ";
             print("Scan finished")
-            
+
             # rotate file (tiff to rotated tiff)
             rotateimageOutputFilename = scanimageOutputFilename
             if pageRotation != 0.:
@@ -83,7 +83,7 @@ class Scan2Archive(object):
             os.system(convertCommand)
             convertFiles += convertOutputFilename + " ";
             print("File conversion finished")
-            
+
             #ocr (on rotated tiff)
             if not self.pdfsandwich:
                 print("OCR (direct) started")
@@ -93,16 +93,16 @@ class Scan2Archive(object):
                 os.system(ocrCommand)
                 ocrFiles += ocrOutputFilename + ".txt "
                 print("OCR finished")
-                
-                
-                
+
+
+
             # check if this was the last page
             userInput = input("Page " + str(fileIndex) + " finished. Continue? Is the next page in the scanner? [Y/n]")
             if userInput == "n" or userInput == "N":
                 finished = True
-            
+
             fileIndex += 1
-            
+
         # Merge everything
         print("Merging pages")
         pdfUniteOutputFilename = self.filename + ".pdf"
@@ -118,17 +118,17 @@ class Scan2Archive(object):
             cpCommand = "cp " + convertFiles + " " + pdfUniteOutputFilename
             if self.verbose: print(cpCommand)
             os.system(cpCommand)
-        
+
         if self.pdfsandwich:
             # use pdfsandwich
             print("OCR (pdfsandwich for whole pdf) started")
             ocrOutputFilename = pageFilename + "_ocr.pdf"
-            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " +  pdfUniteOutputFilename + "-o " + pdfUniteOutputFilename                
+            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " +  pdfUniteOutputFilename + "-o " + pdfUniteOutputFilename
             if self.verbose:
                 ocrCommand += " -verbose"
                 print(ocrCommand)
                 os.system(ocrCommand)
-            print("OCR finished")            
+            print("OCR finished")
         else:
             print("Start merging text files")
             txtmergeOutputFilename = self.filename + "_ocr.txt"
@@ -139,10 +139,10 @@ class Scan2Archive(object):
                             outfile.write(line)
             print("Finished merging text files")
 
-        
-        
+
+
         print("Merging finished")
-        
+
         # Clean up
         rmCommand = "rm " + scanFiles + convertFiles + ocrFiles;
         if self.verbose: print(rmCommand);
@@ -158,9 +158,9 @@ if __name__ == "__main__":
     parser.add_argument('-m', dest='mode', action='store', default="Gray" , help='Gray or Color')
     parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False , help='Use pdfsandwich (NOT WORKING)')
     parser.add_argument('-r', dest='resolution', default=150, action='store', help='Resolution')
-    
+
     args = parser.parse_args()
-    
-    archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device, args.mode, args.verbose, args.pdfsandwich, args.resolution);    
+
+    archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device, args.mode, args.verbose, args.pdfsandwich, args.resolution);
     archiver.run()
-        
+
