@@ -16,7 +16,7 @@ class Scan2Archive(object):
     """
 
     def __init__(self, filename, ocrLanguage, device,
-                 mode, verbose, pdfsandwich, resolution):
+                 mode, verbose, pdfsandwich, resolution, createTxt):
         """ Constructor """
 
         self.filename = filename
@@ -25,6 +25,7 @@ class Scan2Archive(object):
         self.mode = mode
         self.verbose = verbose
         self.resolution = int(resolution)
+        self.createTxt = createTxt
 
         self.pdfsandwich = pdfsandwich
         if pdfsandwich:
@@ -79,25 +80,25 @@ class Scan2Archive(object):
                 os.system(rotateCommand)
                 print("Rotation finished")
 
-            # convert file (rotated tiff to pdf)
-            print("Starting file conversion")
-            convertOutputFilename = pageFilename + ".pdf"
-            convertCommand = "convert " + rotateimageOutputFilename + " " + convertOutputFilename
-            if self.verbose:
-                print(convertCommand)
-            os.system(convertCommand)
-            convertFiles += convertOutputFilename + " "
-            print("File conversion finished")
-
             # ocr (on rotated tiff)
             if not self.pdfsandwich:
                 print("OCR (direct) started")
                 ocrOutputFilename = pageFilename  # tesseract adds the '.txt' itself
-                ocrCommand = "tesseract -l " + self.ocrLanguage + " " + rotateimageOutputFilename + " " + ocrOutputFilename
+                ocrCommandBase = "tesseract -l " + self.ocrLanguage + " " + \
+                    rotateimageOutputFilename + " " + ocrOutputFilename
+                if self.createTxt:
+                    # also create txt file with ocr output
+                    if self.verbose:
+                        print(ocrCommandBase)
+                    os.system(ocrCommandBase)
+                    ocrFiles += ocrOutputFilename + ".txt "
+
+                # OCR and create pdf (tiff to pdf with OCR)
+                ocrCommandPdf = ocrCommandBase + " pdf"
                 if self.verbose:
-                    print(ocrCommand)
-                os.system(ocrCommand)
-                ocrFiles += ocrOutputFilename + ".txt "
+                    print(ocrCommandPdf)
+                    os.system(ocrCommandPdf)
+                convertFiles += ocrOutputFilename + ".pdf "
                 print("OCR finished")
 
             # check if this was the last page
@@ -136,14 +137,15 @@ class Scan2Archive(object):
                 os.system(ocrCommand)
             print("OCR finished")
         else:
-            print("Start merging text files")
-            txtmergeOutputFilename = self.filename + "_ocr.txt"
-            with open(txtmergeOutputFilename, 'w') as outfile:
-                for fname in ocrFiles.split():
-                    with open(fname) as infile:
-                        for line in infile:
-                            outfile.write(line)
-            print("Finished merging text files")
+            if self.createTxt:
+                print("Start merging text files")
+                txtmergeOutputFilename = self.filename + "_ocr.txt"
+                with open(txtmergeOutputFilename, 'w') as outfile:
+                    for fname in ocrFiles.split():
+                        with open(fname) as infile:
+                            for line in infile:
+                                outfile.write(line)
+                print("Finished merging text files")
 
         print("Merging finished")
 
@@ -161,10 +163,15 @@ if __name__ == "__main__":
     parser.add_argument('-l', dest='ocrLanguage', default='deu', action='store', help='Language for OCR: eng, deu')
     parser.add_argument('-d', dest='device', action='store', default="", help='scanner device name, get with scanimage -L')
     parser.add_argument('-m', dest='mode', action='store', default="Gray", help='Gray or Color')
-    parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False, help='Use pdfsandwich (NOT WORKING)')
+    parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False, help='Use pdfsandwich')
+    parser.add_argument('--txt', dest='createTxt', action='store_true',
+                        default=False,
+                        help='Also create text file with OCR output')
     parser.add_argument('-r', dest='resolution', default=150, action='store', help='Resolution')
 
     args = parser.parse_args()
 
-    archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device, args.mode, args.verbose, args.pdfsandwich, args.resolution)
+    archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device,
+                            args.mode, args.verbose, args.pdfsandwich,
+                            args.resolution, args.createTxt)
     archiver.run()
