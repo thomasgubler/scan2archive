@@ -6,6 +6,7 @@
 import argparse
 import datetime
 import os
+from subprocess import call
 
 
 class Scan2Archive(object):
@@ -80,8 +81,8 @@ class Scan2Archive(object):
                 os.system(rotateCommand)
                 print("Rotation finished")
 
-            # ocr (on rotated tiff)
             if not self.pdfsandwich:
+                # ocr (on rotated tiff)
                 print("OCR (direct) started")
                 ocrOutputFilename = pageFilename  # tesseract adds the '.txt' itself
                 ocrCommandBase = "tesseract -l " + self.ocrLanguage + " " + \
@@ -100,6 +101,16 @@ class Scan2Archive(object):
                     os.system(ocrCommandPdf)
                 convertFiles += ocrOutputFilename + ".pdf "
                 print("OCR finished")
+            else:
+                # convert file (rotated tiff to pdf), prepare for pdfsandwich
+                print("Starting file conversion")
+                convertOutputFilename = pageFilename + ".pdf"
+                convertCommand = "convert " + rotateimageOutputFilename + " " + convertOutputFilename
+                if self.verbose:
+                    print(convertCommand)
+                os.system(convertCommand)
+                convertFiles += convertOutputFilename + " "
+                print("File conversion finished")
 
             # check if this was the last page
             userInput = input("Page " + str(fileIndex) + " finished. Continue? Is the next page in the scanner? [Y/n]")
@@ -166,7 +177,7 @@ if __name__ == "__main__":
     parser.add_argument('--pdfsandwich', dest='pdfsandwich', action='store_true', default=False, help='Use pdfsandwich')
     parser.add_argument('--txt', dest='createTxt', action='store_true',
                         default=False,
-                        help='Also create text file with OCR output')
+                        help='Also create text file with OCR output (only without --pdfsandwich)')
     parser.add_argument('-r', dest='resolution', default=150, action='store', help='Resolution')
 
     args = parser.parse_args()
