@@ -128,8 +128,8 @@ class Scan2Archive(object):
         if self.pdfsandwich:
             # use pdfsandwich
             print("OCR (pdfsandwich for whole pdf) started")
-            ocrOutputFilename = pageFilename + "_ocr.pdf"
-            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " + pdfUniteOutputFilename + "-o " + pdfUniteOutputFilename
+            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " + \
+                pdfUniteOutputFilename + " -o " + pdfUniteOutputFilename
             if self.verbose:
                 ocrCommand += " -verbose"
                 print(ocrCommand)
