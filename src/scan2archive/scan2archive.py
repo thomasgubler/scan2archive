@@ -106,7 +106,7 @@ class Scan2Archive(object):
                 ocrCommandPdf = ocrCommandBase + " pdf"
                 if self.verbose:
                     print(ocrCommandPdf)
-                    os.system(ocrCommandPdf)
+                os.system(ocrCommandPdf)
                 convertFiles += ocrOutputFilename + ".pdf "
                 print("OCR finished")
             else:
@@ -153,7 +153,7 @@ class Scan2Archive(object):
             if self.verbose:
                 ocrCommand += " -verbose"
                 print(ocrCommand)
-                os.system(ocrCommand)
+            os.system(ocrCommand)
             print("OCR finished")
         else:
             if self.createTxt:
