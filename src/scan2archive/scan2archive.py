@@ -67,7 +67,15 @@ class Scan2Archive(object):
 
             if self.verbose:
                 print(scanCommand)
-            os.system(scanCommand)
+
+            # try this 3 times
+            for i in range(3):
+                ret = os.system(scanCommand)
+                if ret == 0:
+                    break
+                print("Scanimage returned %d, trying again" % ret)
+            else:
+                raise Exception("%d unsuccessful tries, giving up" % i)
             scanFiles += scanimageOutputFilename + " "
             print("Scan finished")
 
