@@ -17,7 +17,8 @@ class Scan2Archive(object):
     """
 
     def __init__(self, filename, ocrLanguage, device,
-                 mode, verbose, pdfsandwich, resolution, createTxt):
+                 mode, verbose, pdfsandwich, resolution, createTxt,
+                 preOcrCheck, noOcr):
         """ Constructor """
 
         self.filename = filename
@@ -27,6 +28,8 @@ class Scan2Archive(object):
         self.verbose = verbose
         self.resolution = int(resolution)
         self.createTxt = createTxt
+        self.preOcrCheck = preOcrCheck
+        self.noOcr = noOcr
 
         self.pdfsandwich = pdfsandwich
         if pdfsandwich:
@@ -95,7 +98,18 @@ class Scan2Archive(object):
                 os.system(rotateCommand)
                 print("Rotation finished")
 
-            if not self.pdfsandwich:
+            preOcrCheckOk = True
+            if self.preOcrCheck and not self.noocr:
+                userInput = input(
+                    "Page " +
+                    str(fileIndex) +
+                    " finished. Continue with OCR? Does the TIFF look ok?" +
+                    " [Y/n]")
+                if userInput == "n" or userInput == "N":
+                    preOcrCheckOk = False
+
+
+            if not self.pdfsandwich and preOcrCheckOk and not self.noOcr:
                 # ocr (on rotated tiff)
                 print("OCR (direct) started")
                 # tesseract adds the '.txt' itself
@@ -116,7 +130,7 @@ class Scan2Archive(object):
                 os.system(ocrCommandPdf)
                 convertFiles += ocrOutputFilename + ".pdf "
                 print("OCR finished")
-            else:
+            elif preOcrCheckOk:
                 # convert file (rotated tiff to pdf), prepare for pdfsandwich
                 print("Starting file conversion")
                 convertOutputFilename = pageFilename + ".pdf"
@@ -128,15 +142,23 @@ class Scan2Archive(object):
                 convertFiles += convertOutputFilename + " "
                 print("File conversion finished")
 
-            # check if this was the last page
-            userInput = input(
-                "Page " +
-                str(fileIndex) +
-                " finished. Continue? Is the next page in the scanner? [Y/n]")
-            if userInput == "n" or userInput == "N":
-                finished = True
+            if not preOcrCheckOk and self.noOcr:
+                raise Exception("Logic error")
 
-            fileIndex += 1
+            # check if this was the last page
+            if preOcrCheckOk:
+                userInput = input(
+                    "Page " +
+                    str(fileIndex) +
+                    " finished. Continue? Is the next page in the scanner?" +
+                    " Repeat? [Y/n/r]")
+                fileIndexAdd = 1
+                if userInput == "n" or userInput == "N":
+                    finished = True
+                elif userInput == "r" or userInput =="R":
+                    fileIndexAdd = 0
+
+                fileIndex += fileIndexAdd
 
         # Merge everything
         print("Merging pages")
@@ -238,10 +260,24 @@ if __name__ == "__main__":
         default=150,
         action='store',
         help='Resolution')
+    parser.add_argument(
+        '--preocrcheck',
+        dest='preocrcheck',
+        default=False,
+        action='store_true',
+        help='Ask user to check TIFF before OCR')
+    parser.add_argument(
+        '--noocr',
+        dest='noocr',
+        default=False,
+        action='store_true',
+        help='Disable OCR')
 
     args = parser.parse_args()
+    #XXX check compatible flags
 
     archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device,
                             args.mode, args.verbose, args.pdfsandwich,
-                            args.resolution, args.createTxt)
+                            args.resolution, args.createTxt, args.preocrcheck,
+                            args.noocr)
     archiver.run()
