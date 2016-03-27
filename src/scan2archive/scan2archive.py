@@ -108,7 +108,6 @@ class Scan2Archive(object):
                 if userInput == "n" or userInput == "N":
                     preOcrCheckOk = False
 
-
             if not self.pdfsandwich and preOcrCheckOk and not self.noOcr:
                 # ocr (on rotated tiff)
                 print("OCR (direct) started")
@@ -155,7 +154,7 @@ class Scan2Archive(object):
                 fileIndexAdd = 1
                 if userInput == "n" or userInput == "N":
                     finished = True
-                elif userInput == "r" or userInput =="R":
+                elif userInput == "r" or userInput == "R":
                     fileIndexAdd = 0
 
                 fileIndex += fileIndexAdd
@@ -274,7 +273,7 @@ if __name__ == "__main__":
         help='Disable OCR')
 
     args = parser.parse_args()
-    #XXX check compatible flags
+    # XXX check compatible flags
 
     archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device,
                             args.mode, args.verbose, args.pdfsandwich,
