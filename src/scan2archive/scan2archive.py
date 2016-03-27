@@ -6,6 +6,7 @@
 import argparse
 import datetime
 import os
+from subprocess import check_output
 
 
 class Scan2Archive(object):
@@ -23,7 +24,10 @@ class Scan2Archive(object):
 
         self.filename = filename
         self.ocrLanguage = ocrLanguage
-        self.device = device
+        if device is None:
+            self.device = self.find_device()
+        else:
+            self.device = device
         self.mode = mode
         self.verbose = verbose
         self.resolution = int(resolution)
@@ -36,6 +40,23 @@ class Scan2Archive(object):
             print("Using pdfsandwich")
         else:
             print("Using tesseract directly")
+
+    def find_device(self):
+        """Use scanimage to find device"""
+        output = check_output("scanimage -L", shell=True).decode('utf-8')
+
+        if output.find("No scanners were identified") >= 0:
+            raise Exception("No scanners found, try `scanimage -L`")
+
+        # If we get more than one result from scanimage, we don't know which
+        # device to choose and give up.
+        if len(output.splitlines(True)) > 1:
+            raise Exception("More than one scanner found, check `scanimage -L`")
+
+        start = output.find("`")
+        end = output.find("'")
+        device = output[start+1:end]
+        return device
 
     def run(self):
         """Scan and parse multiple documents """
@@ -233,7 +254,7 @@ if __name__ == "__main__":
         '-d',
         dest='device',
         action='store',
-        default="",
+        default=None,
         help='scanner device name, get with scanimage -L')
     parser.add_argument(
         '-m',
