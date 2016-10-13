@@ -278,7 +278,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-r',
         dest='resolution',
-        default=150,
+        default=600,
         action='store',
         help='Resolution')
     parser.add_argument(
