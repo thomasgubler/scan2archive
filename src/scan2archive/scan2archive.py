@@ -87,6 +87,7 @@ class Scan2Archive(object):
                 scanimageArguments += "--device '" + self.device + "'"
                 scanimageArguments += " -x 215 -y 296.9 --resolution " + \
                     str(self.resolution)
+                scanimageArguments += " --contrast 50"
                 scanimageArguments += " --mode " + self.mode
                 scanimageOutputFilename = pageFilename + ".tiff"
                 scanimageOutput = " > " + scanimageOutputFilename
@@ -277,7 +278,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-r',
         dest='resolution',
-        default=150,
+        default=600,
         action='store',
         help='Resolution')
     parser.add_argument(
