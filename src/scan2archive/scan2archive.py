@@ -89,7 +89,7 @@ class Scan2Archive(object):
                     str(self.resolution)
                 scanimageArguments += " --contrast 50"
                 scanimageArguments += " --mode " + self.mode
-                scanimageOutputFilename = pageFilename + ".tiff"
+                scanimageOutputFilename = "'" + pageFilename + ".tiff'"
                 scanimageOutput = " > " + scanimageOutputFilename
                 scanCommand = "scanimage " + \
                     scanimageArguments + " " + scanimageOutput
@@ -136,25 +136,25 @@ class Scan2Archive(object):
                 # tesseract adds the '.txt' itself
                 ocrOutputFilename = pageFilename
                 ocrCommandBase = "tesseract -l " + self.ocrLanguage + " " + \
-                    rotateimageOutputFilename + " " + ocrOutputFilename
+                    rotateimageOutputFilename + " '" + ocrOutputFilename + "'"
                 if self.createTxt:
                     # also create txt file with ocr output
                     if self.verbose:
                         print(ocrCommandBase)
                     os.system(ocrCommandBase)
-                    ocrFiles += ocrOutputFilename + ".txt "
+                    ocrFiles += "'" + ocrOutputFilename + ".txt' "
 
                 # OCR and create pdf (tiff to pdf with OCR)
                 ocrCommandPdf = ocrCommandBase + " pdf"
                 if self.verbose:
                     print(ocrCommandPdf)
                 os.system(ocrCommandPdf)
-                convertFiles += ocrOutputFilename + ".pdf "
+                convertFiles += "'" + ocrOutputFilename + ".pdf' "
                 print("OCR finished")
             elif preOcrCheckOk:
                 # convert file (rotated tiff to pdf), prepare for pdfsandwich
                 print("Starting file conversion")
-                convertOutputFilename = pageFilename + ".pdf"
+                convertOutputFilename = "'" + pageFilename + ".pdf'"
                 convertCommand = "convert " + \
                     rotateimageOutputFilename + " " + convertOutputFilename
                 if self.verbose:
@@ -188,14 +188,15 @@ class Scan2Archive(object):
             # pdf unite
             print("Starting pdf unite")
             pdfuniteCommand = "pdfunite " + \
-                convertFiles + " " + pdfUniteOutputFilename
+                convertFiles + " '" + pdfUniteOutputFilename + "'"
             if self.verbose:
                 print(pdfuniteCommand)
             os.system(pdfuniteCommand)
             print("Finished pdf unite")
         else:
             # only one file, copy instead of pdfunite
-            cpCommand = "cp " + convertFiles + " " + pdfUniteOutputFilename
+            cpCommand = "cp " + convertFiles + " '" + pdfUniteOutputFilename \
+                + "'"
             if self.verbose:
                 print(cpCommand)
             os.system(cpCommand)
@@ -203,12 +204,33 @@ class Scan2Archive(object):
         if self.pdfsandwich:
             # use pdfsandwich
             print("OCR (pdfsandwich for whole pdf) started")
-            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " " + \
-                pdfUniteOutputFilename + " -o " + pdfUniteOutputFilename
+            # The gs command is called stupidly inside pdfsandwich, and
+            # gs chokes on spaces, so we need to work around it.
+            pdfUniteOutputFilenameEscaped = \
+                pdfUniteOutputFilename.replace(" ", "__")
+
+            # Rename file again.
+            mvCommand = "mv '" + pdfUniteOutputFilename + "' '" + \
+                pdfUniteOutputFilenameEscaped + "'"
+            if self.verbose:
+                print(mvCommand)
+            os.system(mvCommand)
+
+            ocrCommand = "pdfsandwich -lang " + self.ocrLanguage + " '" + \
+                pdfUniteOutputFilenameEscaped + "' -o '" + \
+                pdfUniteOutputFilenameEscaped + "'"
+
             if self.verbose:
                 ocrCommand += " -verbose"
                 print(ocrCommand)
             os.system(ocrCommand)
+
+            # Rename produced file again.
+            mvCommand = "mv '" + pdfUniteOutputFilenameEscaped + "' '" + \
+                pdfUniteOutputFilename + "'"
+            if self.verbose:
+                print(mvCommand)
+            os.system(mvCommand)
             print("OCR finished")
         else:
             if self.createTxt:
