@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+
 # @author Thomas Gubler <thomasgubler@gmail.com>
 # License: GPLv3, see LICENSE.txt
 
 import argparse
 import datetime
 import os
+import sys
 from subprocess import check_output
 
 
@@ -51,7 +53,8 @@ class Scan2Archive(object):
         # If we get more than one result from scanimage, we don't know which
         # device to choose and give up.
         if len(output.splitlines(True)) > 1:
-            raise Exception("More than one scanner found, check `scanimage -L`")
+            raise Exception(
+                "More than one scanner found, check `scanimage -L`")
 
         start = output.find("`")
         end = output.find("'")
@@ -252,6 +255,7 @@ class Scan2Archive(object):
         os.system(rmCommand)
         print("Cleaned up and done")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Scan and archive documents',
@@ -296,7 +300,7 @@ if __name__ == "__main__":
         dest='createTxt',
         action='store_true',
         default=False,
-        help='Also create text file with OCR data (only without --pdfsandwich)')
+        help='Also create text file with OCR data (not with --pdfsandwich)')
     parser.add_argument(
         '-r',
         dest='resolution',
@@ -317,7 +321,19 @@ if __name__ == "__main__":
         help='Disable OCR')
 
     args = parser.parse_args()
-    # XXX check compatible flags
+
+    if args.pdfsandwich and args.createTxt:
+        print("Can't use pdfsandwich and create txt file")
+        parser.print_help()
+        sys.exit(1)
+    elif args.pdfsandwich and args.noocr:
+        print("Needs OCR for pdfsandwich")
+        parser.print_help()
+        sys.exit(1)
+    elif args.createTxt and args.noocr:
+        print("Needs OCR for txt")
+        parser.print_help()
+        sys.exit(1)
 
     archiver = Scan2Archive(args.filename, args.ocrLanguage, args.device,
                             args.mode, args.verbose, args.pdfsandwich,
